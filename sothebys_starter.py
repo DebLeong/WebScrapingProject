@@ -12,7 +12,7 @@ driver = webdriver.Chrome()
 driver.get("https://www.sothebys.com/en/results?from=&to=&f2=00000164-609b-d1db-a5e6-e9ff01230000&f2=00000164-609b-d1db-a5e6-e9ff08ab0000&q=")
 
 # initiating csv file using append
-csv_file = open('sothebys7.csv', 'a+', encoding='utf-8', newline='')
+csv_file = open('sothebys10.csv', 'w', encoding='utf-8', newline='')
 writer = csv.writer(csv_file)
 
 # tracking time scraping started
@@ -25,13 +25,15 @@ def scroll_page_end(scroll_count, scroll_pause):
         # Get scroll height
         last_height = driver.execute_script("return document.body.scrollHeight")
         # Scroll down to bottom
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         count += 1
         # Wait to load page
         time.sleep(scroll_pause)
         # Calculate new scroll height and compare with last scroll height
         new_height = driver.execute_script("return document.body.scrollHeight")
         if new_height == last_height:
+            # try again (can be removed)
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             # Wait to load page
             time.sleep(scroll_pause)
             # Calculate new scroll height and compare with last scroll height
@@ -46,7 +48,17 @@ def scroll_page_end(scroll_count, scroll_pause):
                 continue
 
 # driver gets page which contains infinite scroll, scroll_page_end(times_scrolled, time_pause)
-scroll_page_end(10, 0.7)
+scroll_page_end(5, 0.7)
+time.sleep(1)
+scroll_page_end(5, 0.7)
+time.sleep(1)
+scroll_page_end(5, 0.7)
+time.sleep(1)
+scroll_page_end(5, 0.7)
+time.sleep(1)
+scroll_page_end(5, 0.7)
+time.sleep(1)
+
 print('='*50)
 print('Reaching the end of auctions list')
 print('='*50)
@@ -66,13 +78,13 @@ auction_url_length = len(auctions_list)
 print('='*50)
 print(f'length of filtered auctions list: {auction_url_length}')
 print('='*50)
-print(f'links from the auctions list: {auctions_list[:10]}')
+print(f'first 10 links from the auctions list: {auctions_list[:10]}')
 print('='*50)
 
 # iterate through each auction url, open page with chrome webdriver, and assign all auction items for each auction
 # create flag to detect if this is the first time of writing, if so, csv write will write column headers
 times_written = 0
-for auction_link in auctions_list:
+for auction_index, auction_link in enumerate(auctions_list):
     driver.get(auction_link)
     # below blocks uses try, except find xpath elements for the assigned names
     try:
@@ -97,20 +109,23 @@ for auction_link in auctions_list:
     while True:
         try:
             time.sleep(.5)
-            scroll_page_end(10, 0.5)
+            scroll_page_end(1, 0.7)
+            time.sleep(.5)
+            scroll_page_end(3, 0.7)
             load_more = driver.find_element_by_xpath('//div[@class="css-al9y2g"]')
+            time.sleep(.5)
             load_more.click()
         except Exception as e:
             print(type(e), e)
             break
-        
+
     # find all auction items url and assign to auction_items_list
     auction_items_list = driver.find_elements_by_xpath('//div[@class="css-1up9enl"]')
     items_in_auction = len(auction_items_list)
     print('='*50)
     print(f'this auction has {items_in_auction} items')
     print('='*50)
-    print(f'list of items on each auction url: {auction_items_list[:10]}')
+    print(f'first 10 items on each auction url: {auction_items_list[:10]}')
     print('='*50)
 
     auction_items_url = []
@@ -125,7 +140,10 @@ for auction_link in auctions_list:
     # iterate through each auction item's url to access html tags
     for index, auction_item_url in enumerate(auction_items_url):
         print('='*50)
+        print(f'currently scraping index number {auction_index} of auctions_list {auction_link}')
+        print('='*50)
         print(f'currently scraping index number {index} of auction_item {auction_item_url}')
+        print('='*50)
         driver.get(auction_item_url)
         # scroll down page, locate and expand on element "condition"
         while True:
@@ -215,7 +233,7 @@ for auction_link in auctions_list:
         
         move_down_2 = 0
         try:
-            if (re.search('\W*((?i)signed(?i)|(?i)signature(?i)|(?i)sign(?i)|(?i)glass(?i)|(?i)parts(?i)|(?i)plaster(?i)|(?i)mount(?i)|(?i)mounted(?i)|(?i)titled(?i)|(?i)dated)(?i)\W*',tags[0].find_element_by_xpath(f'.//div[@class="css-xs9w33"]/p[{5 + add_zero}]').text) != None):
+            if (re.search('\W*((?i)signed(?i)|(?i)signature(?i)|(?i)sign(?i)|(?i)glass(?i)|(?i)parts(?i)|(?i)plaster(?i)|(?i)mount(?i)|(?i)mounted(?i)|(?i)titled(?i)|(?i)dated)(?i)\W*',tags[0].find_element_by_xpath(f'.//div[@class="css-xs9w33"]/p[{5 + move_down_1}]').text) != None):
                 move_down_2 = 1
                 auction_dict['signed']= tags[0].find_element_by_xpath(f'.//div[@class="css-xs9w33"]/p[{5 + move_down_1}]').text
         except Exception as e:
